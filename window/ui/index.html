@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Auto Cut List</title><link rel="stylesheet" href="style.css"><script src="settings.js" defer></script></head>
+<body>
+
+<div id="label-page" class="app">
+  <header class="toolbar">
+    <select id="part-select" aria-label="Part" title="The part being labeled. Lists the parts open in SolidWorks; choose one to switch to it."></select>
+    <button type="button" id="refresh" class="icon-button" title="Refresh: reload the selected part's cut list from SolidWorks" aria-label="Refresh"><img src="icons/refresh-data.svg" alt=""></button>
+    <select id="config-select" hidden aria-label="Configuration"></select>
+    <span class="spacer"></span>
+    <button type="button" id="open-batch" title="Apply the current templates to every open part">All open parts...</button>
+    <button type="button" id="open-reorder">Reorder cut list...</button>
+    <button type="button" id="export-excel" class="icon-button" title="Export to Excel" aria-label="Export to Excel"><img src="icons/xlsx.svg" alt=""></button>
+    <button type="button" id="export-pdf" class="icon-button" title="Export to PDF" aria-label="Export to PDF"><img src="icons/pdf.svg" alt=""></button>
+    <button type="button" id="open-settings" class="icon-button" title="Settings" aria-label="Settings"><img src="icons/settings.svg" alt=""></button>
+  </header>
+  <div id="part-confirm" class="banner" hidden><span id="part-confirm-text"></span><button type="button" id="part-confirm-yes">Switch</button><button type="button" id="part-confirm-no">Cancel</button></div>
+
+  <div id="library-banner" class="banner" hidden><span id="library-text"></span><button type="button" id="library-read">Read library</button><button type="button" id="library-later">Not now</button><button type="button" id="library-never">Don't ask again</button></div>
+
+  <div class="filters">
+    <div id="category-filters" class="segmented" role="group" aria-label="Show category"></div>
+    <div id="shape-filters" class="segmented sub" role="group" aria-label="Show weldment shape" hidden></div>
+    <label class="check"><input type="checkbox" id="changed-only"> Changed only</label>
+    <input type="search" id="search" placeholder="Search items and labels" aria-label="Search items and labels">
+  </div>
+
+  <main class="workspace">
+    <section class="table-pane" aria-label="Cut-list items">
+      <div class="table-scroll">
+        <table class="grid">
+          <thead><tr>
+            <th class="col-select"><input type="checkbox" id="select-all" aria-label="Select all changed items shown"></th>
+            <th class="col-item">Item</th>
+            <th class="col-category">Category</th>
+            <th class="col-qty numeric">Qty</th>
+            <th class="col-size numeric" id="length-heading">Length</th>
+            <th class="col-label">Description</th>
+            <th class="col-label">Length label</th>
+            <th class="col-flags"><span class="visually-hidden">Notes</span></th>
+          </tr></thead>
+          <tbody id="entries"></tbody>
+        </table>
+        <p id="empty-note" class="empty" hidden></p>
+      </div>
+      <div class="selection-bar">
+        <span id="selection-count"></span>
+        <button type="button" id="make-custom" disabled title="Type these items' labels by hand instead of using templates">Label by hand</button>
+        <button type="button" id="make-automatic" disabled title="Go back to the category templates for these items">Use templates</button>
+      </div>
+    </section>
+
+    <aside class="details" aria-labelledby="details-title">
+      <h2 id="details-title">No item selected</h2>
+      <div class="preview-box">
+        <canvas id="thumbnail" width="448" height="280" tabindex="0" title="Drag to rotate, scroll to zoom, right-drag to pan. Double-click to reset." aria-label="Body preview" role="img" hidden></canvas>
+        <p id="no-preview" class="empty">No preview</p>
+      </div>
+      <small id="rotate-hint" class="hint" hidden>Drag to rotate, scroll to zoom, right-drag to pan, double-click to reset</small>
+      <dl id="details-facts" class="facts"></dl>
+      <p id="details-problem" class="note error" hidden></p>
+      <div id="details-options" class="options" hidden>
+        <label class="check"><input type="checkbox" id="item-custom"> Label by hand</label>
+        <label class="check"><input type="checkbox" id="lock-description"> Keep current Description</label>
+        <label class="check"><input type="checkbox" id="lock-length"> Keep current Length</label>
+      </div>
+      <p id="details-stale" class="note warning" hidden></p>
+      <p id="details-linked" class="note warning" hidden></p>
+    </aside>
+  </main>
+
+  <section class="templates" aria-labelledby="templates-title">
+    <div class="templates-head">
+      <h2 id="templates-title">Templates</h2>
+      <select id="template-category" aria-label="Category whose templates you are editing">
+        <option value="sheet">Sheet Metal</option>
+        <option value="weldment">Weldment</option>
+        <option value="part">Regular Part</option>
+      </select>
+      <select id="template-shape" aria-label="Weldment shape whose templates you are editing" hidden></select>
+      <span id="shape-hint" class="hint" hidden></span>
+      <button type="button" id="shape-reset" hidden title="Remove this shape's own templates">Use All weldments template</button>
+      <span class="spacer"></span>
+      <button type="button" id="symbols-toggle" class="icon-button" title="Insert symbol" aria-label="Insert symbol" aria-expanded="false" aria-controls="symbol-buttons"><img src="icons/diameter-symbol.svg" alt=""></button>
+      <button type="button" id="reset" title="Restore this category's original templates and decimal places">Reset to defaults</button>
+    </div>
+    <div id="symbol-buttons" class="symbols" role="group" aria-label="Insert symbol" hidden></div>
+    <div class="template-fields">
+      <label for="description">Description</label>
+      <input id="description" spellcheck="false" autocomplete="off">
+      <label for="length">Length</label>
+      <input id="length" spellcheck="false" autocomplete="off">
+      <label for="decimals" class="decimals-label">Decimals</label>
+      <select id="decimals">
+        <option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option>
+        <option>5</option><option>6</option><option>7</option><option>8</option>
+      </select>
+    </div>
+  </section>
+
+  <footer class="statusbar">
+    <div class="messages"><div id="status" role="status"></div><p id="host-status" role="status"></p><button type="button" id="stop-waiting" hidden title="Stop waiting for SolidWorks and use the window again. If SolidWorks finishes later, its result is ignored.">Stop waiting</button></div>
+    <button id="undo" type="button" hidden title="Put back every label the last Apply changed">Undo last apply</button>
+    <button id="cancel" type="button">Close</button>
+    <button id="apply" type="button" class="primary" disabled>Apply</button>
+  </footer>
+</div>
+
+<section id="settings-panel" class="page" hidden aria-labelledby="settings-title">
+  <header class="toolbar"><h2 id="settings-title">Settings</h2><span class="spacer"></span><span id="app-version" class="hint"></span><button type="button" id="close-settings">Back</button></header>
+  <div class="settings-layout">
+    <nav aria-label="Settings sections">
+      <button type="button" data-settings-tab="labels" aria-pressed="true">Labels</button>
+      <button type="button" data-settings-tab="appearance" aria-pressed="false">Appearance</button>
+      <button type="button" data-settings-tab="shapes" aria-pressed="false">Weldment shapes</button>
+      <button type="button" data-settings-tab="presets" aria-pressed="false">Template presets</button>
+      <button type="button" data-settings-tab="reference" aria-pressed="false">Field reference</button>
+    </nav>
+    <div class="settings-content">
+      <div class="settings-group" data-settings-page="labels">
+        <p class="hint">These apply to every category.</p>
+        <fieldset>
+          <legend>Capitalization</legend>
+          <label class="check"><input type="radio" name="case" value="upper"> ALL CAPS</label>
+          <label class="check"><input type="radio" name="case" value="lower"> no caps</label>
+          <label class="check"><input type="radio" name="case" value="title"> First Letter Of Every Word</label>
+          <label class="check sub-option"><input type="checkbox" id="keep-caps"> Leave words typed in capitals as they are (14 GA, TS, SS)</label>
+        </fieldset>
+        <fieldset>
+          <legend>Units for {thickness}, {width} and {length}</legend>
+          <label class="check"><input type="radio" name="units" value="imperial"> Imperial (inches)</label>
+          <label class="check"><input type="radio" name="units" value="metric"> Metric (millimeters)</label>
+        </fieldset>
+        <fieldset>
+          <legend>Numbers less than one</legend>
+          <label class="check"><input type="radio" name="leading-zero" value="yes"> 0.500 (with a leading zero)</label>
+          <label class="check"><input type="radio" name="leading-zero" value="no"> .500 (without a leading zero)</label>
+        </fieldset>
+        <fieldset>
+          <legend>Inch values</legend>
+          <label class="check"><input type="radio" name="fractions" value="no"> Decimals (1.250)</label>
+          <label class="check"><input type="radio" name="fractions" value="yes"> Fractions (1-1/4)</label>
+          <div class="field-row"><label for="fraction-denominator">Round fractions to</label>
+          <select id="fraction-denominator"><option value="2">1/2</option><option value="4">1/4</option><option value="8">1/8</option><option value="16">1/16</option><option value="32">1/32</option><option value="64">1/64</option></select></div>
+          <p id="fraction-note" class="hint" hidden>Fractions apply only with imperial units.</p>
+        </fieldset>
+        <fieldset>
+          <legend>When saving a part or switching its configuration in SolidWorks</legend>
+          <label class="check"><input id="warn-on-save" type="checkbox"> Warn if labels are out of date because the model changed</label>
+        </fieldset>
+        <fieldset>
+          <legend>Gauge</legend>
+          <label class="check" id="gauge-option"><input id="use-gauge" type="checkbox"> Use gauge for {thickness} on sheet metal and regular parts</label>
+          <p class="hint">Uses the gauge assigned in SolidWorks, or else the standard gauge that matches the thickness: 0.1196 in steel is 11 GA.
+            Steel (and parts with no material), galvanized and stainless use the Manufacturers' Standard Gauge tables, aluminum uses Brown &amp; Sharpe gauge.
+            Other materials, and thicknesses that match no gauge, keep their measured size.</p>
+        </fieldset>
+      </div>
+      <div class="settings-group" data-settings-page="appearance" hidden>
+        <fieldset>
+          <legend>Window</legend>
+          <div class="field-row" role="radiogroup" aria-label="Theme"><span>Theme</span>
+            <label class="check"><input type="radio" name="theme" value="white"> White</label>
+            <label class="check"><input type="radio" name="theme" value="offwhite"> Off-white</label>
+            <label class="check"><input type="radio" name="theme" value="gray"> Gray</label>
+            <label class="check"><input type="radio" name="theme" value="black"> Black</label>
+          </div>
+          <div class="field-row"><label for="font-family">Font</label>
+          <select id="font-family">
+            <option value="Segoe UI">Segoe UI (default)</option>
+            <option value="Arial">Arial</option>
+            <option value="Bahnschrift">Bahnschrift</option>
+            <option value="Calibri">Calibri</option>
+            <option value="Cambria">Cambria</option>
+            <option value="Century Gothic">Century Gothic</option>
+            <option value="Consolas">Consolas</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Verdana">Verdana</option>
+          </select></div>
+        </fieldset>
+        <fieldset id="thumbnail-settings">
+          <legend>Preview and Excel thumbnails</legend>
+          <div class="field-row"><label for="display-style">Display style</label>
+          <select id="display-style">
+            <option value="wireframe">Wireframe</option>
+            <option value="shaded">Shaded</option>
+            <option value="edges">Shaded with edges</option>
+          </select></div>
+          <label class="check"><input id="shadows" type="checkbox"> Shadows</label>
+          <label class="check"><input id="gloss" type="checkbox"> Glossy lighting</label>
+          <label class="check"><input id="cartoon" type="checkbox"> Cartoon</label>
+          <label class="check"><input id="perspective" type="checkbox"> Perspective</label>
+          <label class="check"><input id="part-colors" type="checkbox" checked> Use the part's SolidWorks colors</label>
+        </fieldset>
+      </div>
+      <div class="settings-group" data-settings-page="shapes" hidden>
+        <p class="hint">Weldment members are sorted into shapes from their profile's library folder and file (or configuration), their SolidWorks callout and their cut-list name. SolidWorks' default profile names are recognized automatically. To give a shape its own templates, choose Weldment and then the shape in the Templates bar.</p>
+        <fieldset>
+          <legend>Profiles in this part</legend>
+          <table class="grid compact"><thead><tr><th>Profile</th><th>Standard</th><th>Shape</th></tr></thead><tbody id="part-profiles"></tbody></table>
+          <p id="part-profiles-empty" class="hint">This part has no weldment members.</p>
+        </fieldset>
+        <fieldset>
+          <legend>Rules</legend>
+          <p class="hint">A profile whose library folder, file, configuration, callout or cut-list name contains this text is sorted into the shape. Rules are checked top first, before the built-in names.</p>
+          <table class="grid compact"><thead><tr><th>Contains</th><th>Shape</th><th></th></tr></thead><tbody id="rules-table"></tbody></table>
+          <p id="rules-empty" class="hint">No rules yet. Choosing a shape for a profile above or in a library below adds one.</p>
+          <div class="field-row"><input id="rule-match" placeholder="Text in the profile name, for example RT-" aria-label="Text a profile name contains"><select id="rule-family" aria-label="Shape"></select><button type="button" id="rule-add">Add rule</button></div>
+        </fieldset>
+        <fieldset>
+          <legend>Shapes</legend>
+          <table class="grid compact"><thead><tr><th>Shape</th><th>Text for {profile}</th><th>Fields</th><th></th></tr></thead><tbody id="shapes-table"></tbody></table>
+          <p class="hint">Every shape also has <code>{profile}</code> <code>{standard}</code> <code>{size}</code> <code>{size1}</code> <code>{size2}</code> <code>{size3}</code>.</p>
+          <div class="field-row"><input id="shape-name" placeholder="New shape, for example Z purlin" aria-label="New shape name"><button type="button" id="shape-add">Add shape</button></div>
+        </fieldset>
+        <fieldset>
+          <legend>Custom profile libraries</legend>
+          <div id="libraries"></div>
+          <p id="libraries-empty" class="hint">None yet. When a part uses profiles from a library other than SolidWorks' default one, the window asks whether to read it.</p>
+        </fieldset>
+        <output id="shape-status" role="status"></output>
+      </div>
+      <div class="settings-group" data-settings-page="presets" hidden>
+        <p id="preset-active" class="hint"></p>
+        <fieldset id="preset-settings">
+          <legend>Saved presets</legend>
+          <select id="preset-list" size="7" aria-label="Saved presets"></select>
+          <div class="field-row"><label for="preset-name">Name</label>
+          <input id="preset-name" maxlength="80" autocomplete="off" placeholder="Name for a new preset, or a new name for the selected one"></div>
+          <div class="button-row">
+            <button type="button" id="preset-store">Save current settings as preset</button>
+            <button type="button" id="preset-load">Load</button>
+            <button type="button" id="preset-rename">Rename</button>
+            <button type="button" id="preset-delete">Delete</button>
+          </div>
+          <div class="button-row">
+            <button type="button" id="preset-export">Export to file...</button>
+            <button type="button" id="preset-import">Import from file...</button>
+          </div>
+          <div id="preset-confirm" class="banner" hidden>
+            <span id="preset-confirm-text"></span>
+            <button type="button" id="preset-confirm-yes">Replace</button>
+            <button type="button" id="preset-confirm-no">Cancel</button>
+          </div>
+          <output id="preset-status" role="status"></output>
+        </fieldset>
+      </div>
+      <div class="settings-group" data-settings-page="reference" hidden>
+        <fieldset>
+          <legend>Fields you can use in templates</legend>
+          <table class="grid reference">
+            <thead><tr><th>Field</th><th>Inserts</th></tr></thead>
+            <tbody>
+              <tr><td><code>{type}</code></td><td>Sheet, Weldment, or Solid</td></tr>
+              <tr><td><code>{thickness}</code></td><td>Smallest dimension, or the assigned gauge</td></tr>
+              <tr><td><code>{width}</code></td><td>Middle dimension</td></tr>
+              <tr><td><code>{length}</code></td><td>Largest dimension, or the weldment cut length</td></tr>
+              <tr><td><code>{quantity}</code></td><td>Bodies in the cut-list item</td></tr>
+              <tr><td><code>{gauge}</code></td><td>Assigned sheet-metal gauge</td></tr>
+              <tr><td><code>{default}</code></td><td>Original SolidWorks callout (weldments)</td></tr>
+              <tr><td><code>{shape}</code></td><td>Box, Cylinder, or Mixed (regular parts)</td></tr>
+              <tr><td><code>{material}</code></td><td>The item's material in SolidWorks (blank if none is assigned)</td></tr>
+              <tr><td><code>{angle1}</code> <code>{angle2}</code></td><td>Weldment end-cut angles in degrees, for example 45 (add ° yourself)</td></tr>
+            </tbody>
+          </table>
+        </fieldset>
+        <fieldset>
+          <legend>Weldment profile fields</legend>
+          <table class="grid reference">
+            <thead><tr><th>Field</th><th>Inserts</th></tr></thead>
+            <tbody>
+              <tr><td><code>{profile}</code></td><td>The member's shape, for example Square tube (text set in Weldment shapes)</td></tr>
+              <tr><td><code>{size}</code></td><td>The profile size as named in the library, for example 2 x 2 x 0.25</td></tr>
+              <tr><td><code>{standard}</code></td><td>The library standard, for example ansi inch</td></tr>
+              <tr><td><code>{side1}</code> <code>{side2}</code> <code>{wall}</code></td><td>Tubes and angles: the two sides (legs) and the wall; flat bar: width and thickness</td></tr>
+              <tr><td><code>{depth}</code> <code>{weight}</code></td><td>W and S beams, channels and tees, as written in the size (W8 x 31)</td></tr>
+              <tr><td><code>{nps}</code> <code>{schedule}</code> <code>{od}</code></td><td>Pipe: nominal size and schedule, or outside diameter (with <code>{wall}</code>)</td></tr>
+              <tr><td><code>{diameter}</code></td><td>Round bar</td></tr>
+              <tr><td><code>{size1}</code> <code>{size2}</code> <code>{size3}</code></td><td>The first three numbers in the size, for any shape</td></tr>
+            </tbody>
+          </table>
+        </fieldset>
+        <fieldset>
+          <legend>Text inserted by {shape}</legend>
+          <div class="field-row"><label for="box-label">Box</label><input id="box-label" autocomplete="off"></div>
+          <div class="field-row"><label for="cylinder-label">Cylinder</label><input id="cylinder-label" autocomplete="off"></div>
+        </fieldset>
+      </div>
+    </div>
+  </div>
+  <footer class="statusbar"><div class="messages"><output id="save-status" role="status"></output></div><button id="save" type="button" class="primary" disabled>Save settings</button></footer>
+</section>
+
+<section id="batch-page" class="page" hidden aria-labelledby="batch-title">
+  <header class="toolbar"><h2 id="batch-title">Apply to all open parts</h2><span class="spacer"></span><button type="button" id="batch-back">Back</button></header>
+  <p class="hint page-hint">Applies the current templates and settings to every changed item in the parts you check. Items labeled by hand and kept fields stay as they are. Each row is all-or-nothing, and you'll need to save each part afterward.</p>
+  <label class="check page-option"><input type="checkbox" id="batch-configs"> Include every configuration of each part (SolidWorks switches to each one in turn, which can take a while)</label>
+  <div class="table-scroll page-table">
+    <table class="grid"><thead><tr><th class="col-select"></th><th>Part</th><th class="numeric col-count">Items</th><th class="numeric col-count">Will change</th><th>Notes</th></tr></thead><tbody id="batch-rows"></tbody></table>
+  </div>
+  <footer class="statusbar"><div class="messages"><output id="batch-status" role="status"></output></div><button id="batch-apply" type="button" class="primary" disabled>Apply</button></footer>
+</section>
+
+<section id="reorder-page" class="page" hidden aria-labelledby="reorder-title">
+  <header class="toolbar"><h2 id="reorder-title">Reorder cut list</h2><span class="spacer"></span><button type="button" id="reorder-back">Back</button></header>
+  <p class="hint page-hint">Sorted by category, then Description, then numeric Length. Blank or non-numeric lengths sort last within a matching description. Apply your labels first, since this uses the labels stored in the part.</p>
+  <div class="table-scroll page-table">
+    <table class="grid"><thead><tr><th class="numeric">New</th><th class="numeric">Now</th><th>Item</th><th>Category</th><th>Description</th><th>Length</th></tr></thead><tbody id="reorder-rows"></tbody></table>
+  </div>
+  <footer class="statusbar"><div class="messages"><output id="reorder-status" role="status"></output></div><button id="reorder-apply" type="button" class="primary">Apply tree order</button></footer>
+</section>
+
+</body>
+</html>

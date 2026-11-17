@@ -1,0 +1,31 @@
+{
+  "productName": "Auto Cut List",
+  "version": "1.0.0",
+  "identifier": "com.sheetmetalcutlist.settings",
+  "build": {
+    "frontendDist": "ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Auto Cut List",
+        "width": 1000,
+        "height": 700,
+        "minWidth": 720,
+        "minHeight": 520,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": ["../icons/app/icon.ico"]
+  }
+}
+
+
+

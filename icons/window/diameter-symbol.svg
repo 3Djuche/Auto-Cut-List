@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Diameter sign ⌀ drawn as vectors: circle + 45° slash, round caps -->
+  <circle cx="512" cy="512" r="372" fill="none" stroke="#1F1A15" stroke-width="108"/>
+  <line x1="169.7" y1="854.3" x2="854.3" y2="169.7" stroke="#1F1A15" stroke-width="108" stroke-linecap="round"/>
+</svg>

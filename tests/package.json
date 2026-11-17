@@ -1,0 +1,11 @@
+{
+  "name": "auto-cut-list-tests",
+  "private": true,
+  "description": "Tests for the Auto Cut List window, run against a simulated add-in.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}

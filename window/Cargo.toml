@@ -1,0 +1,12 @@
+[package]
+name = "cut-list-settings"
+version = "1.0.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = "2"
+
+[dependencies]
+tauri = "=2.11.1"
+serde_json = "1"
+
