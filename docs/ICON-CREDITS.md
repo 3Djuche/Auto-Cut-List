@@ -31,4 +31,4 @@ asks for it, in the README.
 | `icons/window/folder.svg` | Regular Part category | | | |
 
 The program icon (`icons/app/auto-cut-list.png`, rendered to `icons/app/icon.ico` and
-`icons/addin/*.png` by `scripts/Generate-Icons.ps1`) is original artwork made for this project. Earlier drafts are in `design/`.
+`icons/addin/*.png` by `scripts/Generate-Icons.ps1`) is original artwork made for this project.

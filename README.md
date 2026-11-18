@@ -245,7 +245,6 @@ SolidWorks' API types are built into `SheetMetalCutList.dll`, so it doesn't depe
 | `scripts/` | The PowerShell scripts the .cmd files run |
 | `tests/` | Add-in and window tests |
 | `docs/` | `ICON-CREDITS.md`, where the third-party icons' sources and licenses are recorded |
-| `design/` | Earlier icon drafts, not used by the build |
 | `build/` | Everything Build makes (not in git) |
 
 **Icons.** Edit the window's icons in `icons/window`. Build copies them into `window/ui/icons`, which is build output (the window can only load files from `window/ui`), and makes the 32 px busy pointer from `loading.svg`.
