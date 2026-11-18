@@ -1871,7 +1871,7 @@ namespace SheetMetalCutList
                 dimensions = SolidDimensions(bodies, unit.GetConversionFactor(), name, out rotated);
             }
 
-            string category = sheet ? "sheet" : (Array.TrueForAll(bodies, IsWeldmentBody) || IsStockProfile(manager, name)) ? "weldment" : "part";
+            string category = sheet ? "sheet" : (Array.Exists(bodies, IsWeldmentBody) || IsStockProfile(manager, name)) ? "weldment" : "part";
             string lengthSource = sheet ? "Flat-pattern bounding box" : rotated ? "Body extents, rotated to fit the body" : "Body extents";
             decimal nativeLength;
             if (category == "weldment" && TryNativeLength(manager, out nativeLength))
@@ -1941,7 +1941,7 @@ namespace SheetMetalCutList
             try
             {
                 category = Array.Exists(bodies, body => ((IBody2)body).IsSheetMetal()) ? "sheet" :
-                    (Array.TrueForAll(bodies, IsWeldmentBody) || IsStockProfile(manager, name)) ? "weldment" : "part";
+                    (Array.Exists(bodies, IsWeldmentBody) || IsStockProfile(manager, name)) ? "weldment" : "part";
                 if (category == "weldment") callout = DefaultCallout(manager, name, bodies);
             }
             catch (Exception) { }
@@ -2032,6 +2032,9 @@ namespace SheetMetalCutList
             return false;
         }
 
+        // A cut-list item is a weldment when any of its bodies is a structural member. Bodies copied by Mirror Body,
+        // Body Pattern or Move/Copy don't carry the member feature in their own history, so requiring it on every
+        // body made mirrored or patterned members (angles in particular, which no name rule catches) Regular Parts.
         private static bool IsWeldmentBody(object body)
         {
             var features = ((IBody2)body).GetFeatures() as object[];

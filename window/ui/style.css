@@ -172,6 +172,7 @@ table.grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .grid td { padding: 4px 6px; border-bottom: 1px solid var(--chrome-edge); vertical-align: top; overflow-wrap: anywhere; }
 .grid .numeric { text-align: right; font-variant-numeric: tabular-nums; }
 .col-select { width: 30px; }
+.col-position { width: 56px; }
 .col-item { width: 22%; }
 .col-category { width: 88px; }
 .col-qty { width: 42px; }

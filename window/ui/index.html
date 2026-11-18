@@ -255,13 +255,13 @@
             <thead><tr><th>Field</th><th>Inserts</th></tr></thead>
             <tbody>
               <tr><td><code>{type}</code></td><td>Sheet, Weldment, or Solid</td></tr>
-              <tr><td><code>{thickness}</code></td><td>Smallest dimension, or the assigned gauge</td></tr>
+              <tr><td><code>{thickness}</code></td><td>Smallest dimension, or the gauge when Use gauge is on</td></tr>
               <tr><td><code>{width}</code></td><td>Middle dimension</td></tr>
               <tr><td><code>{length}</code></td><td>Largest dimension, or the weldment cut length</td></tr>
               <tr><td><code>{quantity}</code></td><td>Bodies in the cut-list item</td></tr>
-              <tr><td><code>{gauge}</code></td><td>Assigned sheet-metal gauge</td></tr>
+              <tr><td><code>{gauge}</code></td><td>The gauge assigned in SolidWorks, or with Use gauge on, the standard gauge matching the thickness</td></tr>
               <tr><td><code>{default}</code></td><td>Original SolidWorks callout (weldments)</td></tr>
-              <tr><td><code>{shape}</code></td><td>Box, Cylinder, or Mixed (regular parts)</td></tr>
+              <tr><td><code>{shape}</code></td><td>Box, Cylinder, or Mixed (regular parts; end caps are always Box)</td></tr>
               <tr><td><code>{material}</code></td><td>The item's material in SolidWorks (blank if none is assigned)</td></tr>
               <tr><td><code>{angle1}</code> <code>{angle2}</code></td><td>Weldment end-cut angles in degrees, for example 45 (add ° yourself)</td></tr>
             </tbody>
@@ -278,7 +278,7 @@
               <tr><td><code>{side1}</code> <code>{side2}</code> <code>{wall}</code></td><td>Tubes and angles: the two sides (legs) and the wall; flat bar: width and thickness</td></tr>
               <tr><td><code>{depth}</code> <code>{weight}</code></td><td>W and S beams, channels and tees, as written in the size (W8 x 31)</td></tr>
               <tr><td><code>{nps}</code> <code>{schedule}</code> <code>{od}</code></td><td>Pipe: nominal size and schedule, or outside diameter (with <code>{wall}</code>)</td></tr>
-              <tr><td><code>{diameter}</code></td><td>Round bar</td></tr>
+              <tr><td><code>{diameter}</code></td><td>Round bar, and round regular parts</td></tr>
               <tr><td><code>{size1}</code> <code>{size2}</code> <code>{size3}</code></td><td>The first three numbers in the size, for any shape</td></tr>
             </tbody>
           </table>
@@ -308,7 +308,7 @@
   <header class="toolbar"><h2 id="reorder-title">Reorder cut list</h2><span class="spacer"></span><button type="button" id="reorder-back">Back</button></header>
   <p class="hint page-hint">Sorted by category, then Description, then numeric Length. Blank or non-numeric lengths sort last within a matching description. Apply your labels first, since this uses the labels stored in the part.</p>
   <div class="table-scroll page-table">
-    <table class="grid"><thead><tr><th class="numeric">New</th><th class="numeric">Now</th><th>Item</th><th>Category</th><th>Description</th><th>Length</th></tr></thead><tbody id="reorder-rows"></tbody></table>
+    <table class="grid"><thead><tr><th class="numeric col-position">New</th><th class="numeric col-position">Now</th><th>Item</th><th>Category</th><th>Description</th><th>Length</th></tr></thead><tbody id="reorder-rows"></tbody></table>
   </div>
   <footer class="statusbar"><div class="messages"><output id="reorder-status" role="status"></output></div><button id="reorder-apply" type="button" class="primary">Apply tree order</button></footer>
 </section>

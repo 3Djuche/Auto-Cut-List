@@ -585,6 +585,11 @@ test("the window opens with no part, and Refresh loads one once it's open", asyn
     assert.match(app.$("#host-status").textContent, /No parts are open/);
     assert.equal(app.$("#part-select").value, "");
     assert.deepEqual(app.names(), []);
+    assert.match(app.$("#empty-note").textContent, /No parts are open/);
+    // Opening a part in SolidWorks updates the empty table's hint.
+    app.push({type: "parts", push: true, parts: [{key: "C:\\A.SLDPRT", title: "A.SLDPRT"}], part: ""});
+    await app.tick();
+    assert.match(app.$("#empty-note").textContent, /No part loaded/);
     app.$("#refresh").click();
     await app.tick(60);
     assert.equal(app.last().Action, "refresh");

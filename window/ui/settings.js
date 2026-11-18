@@ -330,8 +330,7 @@ function buildRows() {
     entries.replaceChildren(...visible.map(createRow));
     const note = $("#empty-note");
     note.hidden = visible.length > 0;
-    note.textContent = !input.entries.length ? "This part has no populated cut-list items. Update its cut list in SolidWorks, then click Refresh."
-        : "No items match the current filter.";
+    note.textContent = !input.entries.length ? emptyListText() : "No items match the current filter.";
     if (!visible.includes(focused)) focusEntry(visible.length ? visible[0] : -1);
     refresh();
 }
@@ -2423,8 +2422,11 @@ document.querySelector("#open-reorder").addEventListener("click", () => {
     pendingOrder = sorted.map(item => item.index);
     document.querySelector("#reorder-rows").replaceChildren(...sorted.map(({entry, index}, position) => {
         const row = document.createElement("tr");
-        for (const value of [position + 1, index + 1, entry.name, storedCategory(entry), entry.currentDescription ?? "", entry.currentLength ?? ""])
-            row.insertCell().textContent = String(value);
+        [position + 1, index + 1, entry.name, storedCategory(entry), entry.currentDescription ?? "", entry.currentLength ?? ""].forEach((value, column) => {
+            const cell = row.insertCell();
+            cell.textContent = String(value);
+            if (column < 2) cell.className = "numeric";
+        });
         return row;
     }));
     reorderApply.disabled = pendingOrder.every((index, position) => index === position);
@@ -2478,6 +2480,15 @@ function renderParts(parts, key, title) {
     partSelect.replaceChildren(...options);
     partSelect.value = currentPart;
     partSelect.disabled = !list.length;
+    // Opening or closing parts changes what an empty table should say.
+    if (input && !input.entries.length) $("#empty-note").textContent = emptyListText();
+}
+
+// What the empty table says: no part loaded, no parts open, or a part with nothing in its cut list.
+function emptyListText() {
+    if (currentPart) return "This part has no populated cut-list items. Update its cut list in SolidWorks, then click Refresh.";
+    return partSelect.options.length > 1 ? "No part loaded. Choose one from the Part list, or click Refresh to load the active part."
+        : "No parts are open. Open a part in SolidWorks, then click Refresh.";
 }
 
 // Unapplied Custom edits or lock changes that switching parts would discard.
