@@ -63,7 +63,7 @@ namespace SheetMetalCutList
                 key.SetValue("", 0, RegistryValueKind.DWord);
                 key.SetValue("Title", "Auto Cut List");
                 key.SetValue("Description", "Label sheet-metal, weldment and solid-body cut-list items.");
-                // Shown next to the add-in in Tools > Add-Ins. Install.ps1 copies the icons before registering.
+                // Shown next to the add-in in Tools > Add-Ins. The setup program (and Install.ps1) copies the icons before registering.
                 string icon = Path.Combine(Path.GetDirectoryName(type.Assembly.Location), "icons", "auto-cut-list_16.png");
                 if (File.Exists(icon)) key.SetValue("Icon Path", icon);
             }

@@ -27,12 +27,14 @@ The installer uses the SolidWorks API libraries from your own SolidWorks install
 
 ### Install
 
-1. Extract the ZIP, save any open work, and close SolidWorks.
-2. Double-click **Install.cmd** and approve the administrator prompt. The installer window stays open so you can read the result.
-   - If SolidWorks is installed somewhere other than `C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS`, open 64-bit PowerShell as Administrator in the extracted folder and run `.\scripts\Install.ps1 -SolidWorksDirectory "<your SolidWorks folder>"`.
-3. Start SolidWorks, open **Tools > Add-Ins**, and check **Auto Cut List** under Active Add-ins. Check **Start Up** as well to load it every time SolidWorks starts.
+1. Download **AutoCutList-setup-<version>.exe** from the [latest release](https://github.com/3Djuche/Auto-Cut-List/releases/latest).
+2. Save your work and close SolidWorks, then run the setup program and approve the administrator prompt. The files aren't code-signed, so Windows SmartScreen may warn about an unrecognized app; choose **More info > Run anyway**.
+3. Leave **Load Auto Cut List every time SolidWorks starts** checked (or check **Auto Cut List** under **Tools > Add-Ins** later).
+4. Open SolidWorks and choose **Tools > Auto Cut List > Label Cut List**.
 
-The add-in is installed to `C:\Program Files\Auto Cut List for SolidWorks`. If an earlier version is installed under its old name, Sheet Metal Cut List, the installer replaces it and your settings are kept. To upgrade, close SolidWorks and run Install.cmd from the new package; it replaces the previous version.
+The add-in is installed to `C:\Program Files\Auto Cut List for SolidWorks`. Installing needs administrator rights; where users don't have them, IT can install it silently with `AutoCutList-setup-<version>.exe /VERYSILENT`. To upgrade, run the new version's setup program; your templates and presets are kept. An earlier version installed with Install.cmd, or under the add-in's old name, Sheet Metal Cut List, is replaced.
+
+To uninstall, close SolidWorks and remove **Auto Cut List** under Windows **Settings > Apps > Installed apps**. Your templates and presets stay in your Windows profile, ready for a reinstall.
 
 ### Open the window
 
@@ -268,9 +270,8 @@ Notes:
 
 ## Troubleshooting
 
-- **The settings window does not open.** The add-in shows the reason. If it mentions WebView2, install the Evergreen Runtime from the link under [Requirements](#requirements). If the window is missing, run Install.cmd again.
+- **The settings window does not open.** The add-in shows the reason. If it mentions WebView2, install the Evergreen Runtime from the link under [Requirements](#requirements). If the window is missing, run the setup program again.
 - **"No populated cut-list entries."** Update the cut list in SolidWorks and try again.
 - **The window opens empty.** No part was active when you opened it. Open a part in SolidWorks and click **Refresh**, or choose one from the Part list.
 - **Labels show a template error instead of a size.** The label needs more decimal places than SolidWorks stores for that size. Use fewer decimal places, or raise the part's in SolidWorks (Document Properties > Units).
-
-To uninstall, close SolidWorks, open 64-bit PowerShell as Administrator in the extracted folder, and run `.\scripts\Install.ps1 -Uninstall`.
+- **Auto Cut List isn't in the Tools menu.** Check **Auto Cut List** under **Tools > Add-Ins** (and **Start Up** to load it every time).

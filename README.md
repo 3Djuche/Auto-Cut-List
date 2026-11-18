@@ -16,12 +16,14 @@ The installer uses the SolidWorks API libraries from your own SolidWorks install
 
 ## Install
 
-1. Extract the ZIP, save any open work, and close SolidWorks.
-2. Double-click **Install.cmd** and approve the administrator prompt. The installer window stays open so you can read the result.
-   - If SolidWorks is installed somewhere other than `C:\Program Files\SOLIDWORKS Corp\SOLIDWORKS`, open 64-bit PowerShell as Administrator in the extracted folder and run `.\scripts\Install.ps1 -SolidWorksDirectory "<your SolidWorks folder>"`.
-3. Start SolidWorks, open **Tools > Add-Ins**, and check **Auto Cut List** under Active Add-ins. Check **Start Up** as well to load it every time SolidWorks starts.
+1. Download **AutoCutList-setup-<version>.exe** from the [latest release](https://github.com/3Djuche/Auto-Cut-List/releases/latest).
+2. Save your work and close SolidWorks, then run the setup program and approve the administrator prompt. The files aren't code-signed, so Windows SmartScreen may warn about an unrecognized app; choose **More info > Run anyway**.
+3. Leave **Load Auto Cut List every time SolidWorks starts** checked (or check **Auto Cut List** under **Tools > Add-Ins** later).
+4. Open SolidWorks and choose **Tools > Auto Cut List > Label Cut List**.
 
-The add-in is installed to `C:\Program Files\Auto Cut List for SolidWorks`. If an earlier version is installed under its old name, Sheet Metal Cut List, the installer replaces it and your settings are kept. To upgrade, close SolidWorks and run Install.cmd from the new package; it replaces the previous version.
+The add-in is installed to `C:\Program Files\Auto Cut List for SolidWorks`. Installing needs administrator rights; where users don't have them, IT can install it silently with `AutoCutList-setup-<version>.exe /VERYSILENT`. To upgrade, run the new version's setup program; your templates and presets are kept. An earlier version installed with Install.cmd, or under the add-in's old name, Sheet Metal Cut List, is replaced.
+
+To uninstall, close SolidWorks and remove **Auto Cut List** under Windows **Settings > Apps > Installed apps**. Your templates and presets stay in your Windows profile, ready for a reinstall.
 
 ## Quick start
 
@@ -43,21 +45,24 @@ From the repository folder, double-click **Build.cmd**, or run:
 .\scripts\Build.ps1
 ```
 
-Either way, this builds `SheetMetalCutList.dll` and `cut-list-settings.exe` into the `build` folder (Build.cmd also saves its output to `build\build.log`). Pass `-SolidWorksDirectory` if SolidWorks is not in the default folder. Then run Install.cmd.
+Either way, this builds `SheetMetalCutList.dll` and `cut-list-settings.exe` into the `build` folder (Build.cmd also saves its output to `build\build.log`). Pass `-SolidWorksDirectory` if SolidWorks is not in the default folder.
 
-SolidWorks' API types are built into `SheetMetalCutList.dll`, so it doesn't depend on one SolidWorks version's interop DLLs. If the compiler can't do that, Build warns and references them instead, and Install.ps1 copies just the ones the add-in needs.
+To try a build on your own PC, run **Install.cmd** (it installs straight from `build`; `.\scripts\Install.ps1 -Uninstall` from an administrator PowerShell removes it). To make the setup program for a release, install [Inno Setup 6](https://jrsoftware.org/isdl.php) (`winget install JRSoftware.InnoSetup`) and double-click **Package.cmd**: it builds `build\AutoCutList-setup-<version>.exe` from the latest build. The version comes from `window/tauri.conf.json` and must match `Version` in `addin/AutoCutList.cs`.
+
+SolidWorks' API types are built into `SheetMetalCutList.dll`, so it doesn't depend on one SolidWorks version's interop DLLs. If the compiler can't do that, Build warns and references them instead, and Install.ps1 copies just the ones the add-in needs. Package.cmd refuses such a build, since the setup program never includes SolidWorks' own files.
 
 **Repository layout.**
 
 | Folder | What's in it |
 |---|---|
-| (top) | `Build.cmd`, `Install.cmd`, `Test.cmd` (double-click these) and this README |
+| (top) | `Build.cmd`, `Test.cmd`, `Install.cmd` and `Package.cmd` (double-click these) and this README |
 | `addin/` | The SolidWorks add-in (`AutoCutList.cs`, built as `SheetMetalCutList.dll`, the name SolidWorks registered it under) |
 | `window/` | The settings window: the Tauri program (`src/`, `Cargo.toml`, `tauri.conf.json`) and its page (`ui/`) |
 | `icons/window/` | The window's icons (toolbar, categories, shapes, busy pointer) |
 | `icons/app/` | The program icon: `auto-cut-list.png` (master artwork) and `icon.ico` (window and .exe). Regenerate the ICO and add-in PNG sizes with `scripts/Generate-Icons.ps1`. |
 | `icons/addin/` | The program icon as PNGs for the SolidWorks menu and Add-Ins list |
 | `scripts/` | The PowerShell scripts the .cmd files run |
+| `installer/` | The Inno Setup script for the setup program (`AutoCutList.iss`) |
 | `tests/` | Add-in and window tests |
 | `docs/` | The user guide (`user-guide.md`) and its screenshots (`images/`), and `ICON-CREDITS.md`, where the third-party icons' sources and licenses are recorded |
 | `build/` | Everything Build makes (not in git) |
@@ -72,14 +77,6 @@ Double-click **Test.cmd** (or run `.\scripts\Test.ps1`) after building. Neither 
 - **Window tests** (`tests/*.test.js`): the settings window against a simulated add-in. They need [Node.js](https://nodejs.org) 20 or later and are skipped without it. To run them on their own: `cd tests`, `npm install`, `npm test`.
 
 What only SolidWorks can do (measuring bodies, writing properties, switching configurations, events) is checked in SolidWorks.
-
-## Uninstall
-
-Close SolidWorks, open 64-bit PowerShell as Administrator in the extracted folder, and run:
-
-```powershell
-.\scripts\Install.ps1 -Uninstall
-```
 
 ## Credits
 
