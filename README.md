@@ -84,3 +84,16 @@ Close SolidWorks, open 64-bit PowerShell as Administrator in the extracted folde
 ## Credits
 
 Third-party icons, with their sources and licenses, are listed in `docs/ICON-CREDITS.md`.
+
+## License
+
+Auto Cut List is licensed under either of
+
+- the [MIT License](LICENSE-MIT), or
+- the [Apache License, Version 2.0](LICENSE-APACHE)
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution you submit for inclusion in this project, as defined in the Apache-2.0 license, is dual licensed as above, without any additional terms or conditions.
+
+The third-party icons in `icons/window` are not covered by this license; each keeps the license of its source, listed in `docs/ICON-CREDITS.md`.
