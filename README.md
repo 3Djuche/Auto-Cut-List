@@ -23,7 +23,7 @@ The add-in is installed to `C:\Program Files\Auto Cut List for SolidWorks`. If a
 
 ## Quick start
 
-1. Open a part and choose **Tools > Auto Cut List > Label Cut List**.
+1. Choose **Tools > Auto Cut List > Label Cut List**. If a part is active, its cut list loads; otherwise the window opens empty, and **Refresh** loads a part once one is open.
 2. The table lists every cut-list item with its category, quantity, measured length, and the **Description** and **Length** labels the templates produce. Labels that would change are shown in blue, with the current value struck through underneath.
 3. Edit a category's templates in the **Templates** bar at the bottom. Clicking an item switches the bar to that item's category, and the table updates as you type.
 4. Check the items you want to write (the checkbox in the header selects every changed item shown) and click **Apply**.
@@ -33,9 +33,9 @@ Nothing is written to the part until you apply, and **Close** discards any unapp
 
 The window stays open after each action (apply, reorder, export), and the result appears at the bottom of the window. After an apply or reorder, the list refreshes from the part; unapplied Custom edits and locks on other items are kept. SolidWorks stays usable while the window is open, so you can rotate or inspect the model alongside it.
 
-The command is available only when a part is the active document; it's grayed out for assemblies and drawings. Only one window is open at a time.
+The command works with any document active, or none. Only one window is open at a time.
 
-**Part:** the dropdown at the top lists the parts open in their own SolidWorks windows (parts loaded only as assembly components aren't listed). Choose a part to load its cut list; if you have unapplied Custom edits or lock changes, you're asked before they're discarded. Every action works on the part shown in the dropdown, whichever document is active in SolidWorks. The list updates on its own when parts are opened, closed or saved under a new name. **Refresh**, next to the dropdown, reloads the selected part's cut list from SolidWorks. If you run the command on another part while the window is open, the window comes to the front and offers to switch to it. If the selected part is closed, choose another part from the list.
+**Part:** the dropdown at the top lists the parts open in their own SolidWorks windows (parts loaded only as assembly components aren't listed). Choose a part to load its cut list; if you have unapplied Custom edits or lock changes, you're asked before they're discarded. Every action works on the part shown in the dropdown, whichever document is active in SolidWorks. The list updates on its own when parts are opened, closed or saved under a new name. **Refresh**, next to the dropdown, reloads the selected part's cut list from SolidWorks. If you run the command on another part while the window is open, the window comes to the front and offers to switch to it. If the window has no part (it was opened without one, or its part was closed), Refresh loads the part that's active in SolidWorks, or else the first open part; you can also choose one from the list.
 
 If the cut list or its labels change in SolidWorks while the window is open, the next apply or reorder refreshes the list instead of writing anything, so you can check your changes first. Unapplied Custom edits and locks are kept when the same part is refreshed.
 

@@ -573,3 +573,21 @@ test("round regular parts use the Cylinder template with {diameter}; end caps st
     assert.equal(app.label("BAR"), "ROUND 1.000");
     assert.equal(app.label("CAP"), "SOLID 0.120 X 2.375");
 });
+
+test("the window opens with no part, and Refresh loads one once it's open", async () => {
+    const app = await openWindow({
+        entries: [], parts: [],
+        overrides: {part: "", partTitle: "", message: "No parts are open. Open a part in SolidWorks, then click Refresh to load its cut list."},
+        respond: message => message.Action === "refresh" ? {type: "refresh", ok: true, requestId: message.RequestId,
+            entries: [item("P1", "sheet", 20)], parts: [{key: "C:\\A.SLDPRT", title: "A.SLDPRT"}], part: "C:\\A.SLDPRT",
+            partTitle: "A.SLDPRT", message: "Loaded 1 cut-list entries from A.SLDPRT."} : null
+    });
+    assert.match(app.$("#host-status").textContent, /No parts are open/);
+    assert.equal(app.$("#part-select").value, "");
+    assert.deepEqual(app.names(), []);
+    app.$("#refresh").click();
+    await app.tick(60);
+    assert.equal(app.last().Action, "refresh");
+    assert.deepEqual(app.names(), ["P1"]);
+    assert.equal(app.$("#part-select").value, "C:\\A.SLDPRT");
+});

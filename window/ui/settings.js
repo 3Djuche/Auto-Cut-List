@@ -1961,6 +1961,8 @@ invoke("read_settings").then(data => {
     buildRows();
     listenToHost();
     initPresets(data);
+    // Opened with no part, or a part with nothing in its cut list: say what to do next.
+    if (data.message) setHostStatus(data.message);
 }).catch(error => { status.textContent = String(error); });
 
 // ---------- Template presets ----------

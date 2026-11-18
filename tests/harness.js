@@ -43,7 +43,7 @@ async function openWindow({entries, parts, respond, overrides = {}} = {}) {
     const window = dom.window;
     window.HTMLCanvasElement.prototype.getContext = () => null;
     parts = parts ?? [{key: "C:\\A.SLDPRT", title: "A.SLDPRT"}];
-    const data = {version: "1.0.0", part: parts[0].key, partTitle: parts[0].title, parts, presets: [], activePreset: "",
+    const data = {version: "1.0.0", part: parts[0]?.key ?? "", partTitle: parts[0]?.title ?? "", parts, presets: [], activePreset: "",
         settings: settings(), defaults: settings(), entries: entries ?? [], ...overrides};
     const sent = [];
     const queue = [];

@@ -144,9 +144,10 @@ namespace SheetMetalCutList
             return true;
         }
 
+        // The window opens with or without a part: with none open, it starts empty and Refresh loads one later.
         public int CanLabel()
         {
-            return app != null && app.ActiveDoc is IPartDoc ? 1 : 0;
+            return app != null ? 1 : 0;
         }
 
         public void LabelCutList()
@@ -165,15 +166,16 @@ namespace SheetMetalCutList
                     return;
                 }
                 if (!(part is IPartDoc))
-                    throw new InvalidOperationException("Open a part in SolidWorks first.");
-
-                var labels = ReadLabels(part);
-                if (labels.Count == 0)
                 {
-                    Show("No populated cut-list entries. Update the cut list and try again.", swMessageBoxIcon_e.swMbInformation);
+                    StartSession(null, new List<Label>(), OpenParts().Count == 0
+                        ? "No parts are open. Open a part in SolidWorks, then click Refresh to load its cut list."
+                        : "Choose a part from the Part list, or click Refresh to load the active part.");
                     return;
                 }
-                StartSession(part, labels);
+
+                var labels = ReadLabels(part);
+                StartSession(part, labels, labels.Count == 0
+                    ? "No populated cut-list entries in " + part.GetTitle() + ". Update its cut list in SolidWorks, then click Refresh." : null);
             }
             catch (Exception error)
             {
@@ -565,7 +567,8 @@ namespace SheetMetalCutList
             return new JavaScriptSerializer { MaxJsonLength = Int32.MaxValue };
         }
 
-        private void StartSession(IModelDoc2 part, List<Label> labels)
+        // `part` is null when the window opens with no part; it then starts with an empty list.
+        private void StartSession(IModelDoc2 part, List<Label> labels, string message)
         {
             string directory = Path.GetDirectoryName(typeof(AddIn).Assembly.Location);
             string executable = Path.Combine(directory, "cut-list-settings.exe");
@@ -582,8 +585,9 @@ namespace SheetMetalCutList
                 configurationNames = ConfigurationNames(part),
                 activeConfiguration = ActiveConfiguration(part),
                 part = PartKey(part),
-                partTitle = part.GetTitle(),
+                partTitle = part == null ? "" : part.GetTitle(),
                 parts = OpenParts(),
+                message,
                 settings = loaded,
                 defaults = LabelSettings.AllDefaults(),
                 presets = PresetStore.Load(),
@@ -609,7 +613,7 @@ namespace SheetMetalCutList
                     "Check that antivirus software is not blocking " + executable + ", then run Install.cmd again.");
             }
 
-            var current = new Session { Process = process, Part = part, PartTitle = part.GetTitle(),
+            var current = new Session { Process = process, Part = part, PartTitle = part == null ? "" : part.GetTitle(),
                 Configuration = ActiveConfiguration(part), SolidWorksConfiguration = ActiveConfiguration(part) };
             process.ErrorDataReceived += (sender, data) => {
                 if (!String.IsNullOrWhiteSpace(data.Data)) lock (current.Errors) current.Errors.AppendLine(data.Data.Trim());
@@ -689,7 +693,7 @@ namespace SheetMetalCutList
             lastConfiguration = ActiveConfiguration(current.Part);
             lastParts = PartsSnapshot(current, OpenParts(), PartKey(current.Part) + "\n" + lastConfiguration + "\n" +
                 String.Join("\n", ConfigurationNames(current.Part)));
-            lastPartOpen = true;
+            lastPartOpen = current.Part != null && IsOpen(current.Part);
         }
 
         private static string PartsSnapshot(Session current, List<object> parts, string key)
@@ -831,6 +835,7 @@ namespace SheetMetalCutList
         // Identifies a document between messages: its file path, or its title if it has never been saved.
         private static string PartKey(IModelDoc2 model)
         {
+            if (model == null) return "";
             try
             {
                 string path = model.GetPathName();
@@ -850,6 +855,37 @@ namespace SheetMetalCutList
             };
         }
 
+        // Shows `part` in the window: its cut list, in its active configuration.
+        private object LoadPart(Session current, IModelDoc2 part)
+        {
+            current.Part = part;
+            current.PartTitle = part.GetTitle();
+            current.Configuration = ActiveConfiguration(part);
+            ResetWatch(current);
+            return InShownConfiguration(current, () => {
+                var labels = ReadLabels(part);
+                return RefreshReply(current, labels, true, labels.Count == 0
+                    ? "No populated cut-list entries in " + current.PartTitle + ". Update its cut list in SolidWorks, then click Refresh."
+                    : "Loaded " + labels.Count + " cut-list entries from " + current.PartTitle + ".");
+            });
+        }
+
+        // The part Refresh loads when the window has none: the active document if it's a part, else the first open part.
+        private IModelDoc2 PartToLoad()
+        {
+            var active = app.ActiveDoc as IModelDoc2;
+            if (active is IPartDoc && active.Visible) return active;
+            foreach (var model in OpenPartDocs()) return model;
+            return null;
+        }
+
+        private string NoPartMessage(Session current)
+        {
+            if (OpenParts().Count == 0) return "No parts are open. Open a part in SolidWorks, then click Refresh to load its cut list.";
+            return current.Part == null ? "Choose a part from the Part list, or click Refresh to load the active part."
+                : current.PartTitle + " has been closed. Choose an open part from the Part list.";
+        }
+
         private object PartsReply(Session current, string message)
         {
             string key = IsOpen(current.Part) ? PartKey(current.Part) : "";
@@ -858,6 +894,7 @@ namespace SheetMetalCutList
 
         private bool IsOpen(IModelDoc2 part)
         {
+            if (part == null) return false;
             try
             {
                 var documents = app.GetDocuments() as object[];
@@ -978,23 +1015,14 @@ namespace SheetMetalCutList
                         Reply(current, PartsReply(current, "That part is no longer open. The list of open parts was updated."));
                         return;
                     }
-                    current.Part = chosen;
-                    current.PartTitle = chosen.GetTitle();
-                    current.Configuration = ActiveConfiguration(chosen);
-                    ResetWatch(current);
-                    Reply(current, InShownConfiguration(current, () => {
-                        var chosenLabels = ReadLabels(chosen);
-                        return RefreshReply(current, chosenLabels, true, chosenLabels.Count == 0
-                            ? "No populated cut-list entries in " + current.PartTitle + ". Update its cut list in SolidWorks, then click Refresh."
-                            : "Loaded " + chosenLabels.Count + " cut-list entries from " + current.PartTitle + ".");
-                    }));
+                    Reply(current, LoadPart(current, chosen));
                     return;
                 }
                 if (message.Action == "selectConfiguration")
                 {
                     if (!IsOpen(current.Part))
                     {
-                        Reply(current, PartsReply(current, current.PartTitle + " has been closed. Choose an open part from the Part list."));
+                        Reply(current, PartsReply(current, NoPartMessage(current)));
                         return;
                     }
                     if (!ConfigurationNames(current.Part).Contains(message.Configuration ?? ""))
@@ -1010,7 +1038,11 @@ namespace SheetMetalCutList
                 }
                 if (!IsOpen(current.Part))
                 {
-                    Reply(current, PartsReply(current, current.PartTitle + " has been closed. Choose an open part from the Part list."));
+                    // Refresh with no part (the window was opened without one, or its part was closed) loads the part
+                    // that's active in SolidWorks, or else the first open part.
+                    var next = message.Action == "refresh" ? PartToLoad() : null;
+                    if (next != null) Reply(current, LoadPart(current, next));
+                    else Reply(current, PartsReply(current, NoPartMessage(current)));
                     return;
                 }
                 // Exports ask for the file first, so SolidWorks isn't left on another configuration while the dialog is open.
@@ -1143,6 +1175,7 @@ namespace SheetMetalCutList
 
         private static string ActiveConfiguration(IModelDoc2 part)
         {
+            if (part == null) return "";
             try
             {
                 var configuration = part.GetActiveConfiguration() as IConfiguration;
@@ -1154,6 +1187,7 @@ namespace SheetMetalCutList
         private static List<string> ConfigurationNames(IModelDoc2 part)
         {
             var names = new List<string>();
+            if (part == null) return names;
             try
             {
                 var raw = part.GetConfigurationNames() as Array;
